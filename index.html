@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>One Piece Card Game — Pack Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <h1>One Piece Card Game</h1>
+  <p id="setTitle">Pack Simulator</p>
+</header>
+
+<!-- TOP BAR: AUTH + SET SELECT -->
+<div class="top-bar" id="topBar">
+  <h2>⚓ Account & Set</h2>
+
+  <div class="auth-row">
+    <button class="btn-secondary accent" id="btnLogin">🔑 Login con Google</button>
+    <button class="btn-secondary" id="btnLogout" style="display:none;">🚪 Logout</button>
+    <span id="whoami">Non loggato</span>
+  </div>
+
+  <div class="set-row">
+    <div class="input-group" style="min-width:280px;text-align:left;">
+      <label for="setSelect">Seleziona un set</label>
+      <select id="setSelect" class="filter-select" style="height:40px;min-width:280px;">
+        <option value="">Caricamento…</option>
+      </select>
+    </div>
+    <button class="btn-open" id="btnLoadSet">📦 Carica Set</button>
+    <a href="./admin.html" id="adminLink" style="display:none;">⚙ Dashboard Admin ↗</a>
+  </div>
+
+  <div id="topError" class="top-error" style="display:none;"></div>
+</div>
+
+<!-- LAYOUT PRINCIPALE -->
+<div class="main-layout" id="mainLayout">
+  <aside class="sidebar">
+
+    <div class="panel">
+      <div class="panel-header">⚔ Apri Buste</div>
+      <div class="panel-body">
+        <div class="sim-control">
+          <div class="input-group">
+            <label for="packCount">Numero di buste</label>
+            <input type="number" id="packCount" value="6" min="1" max="999">
+          </div>
+          <button class="btn-open" onclick="openPacks()">🎴 Apri Buste</button>
+          <button class="btn-secondary" onclick="resetAll()">↺ Reset sessione</button>
+          <div style="font-size:.8rem;color:rgba(245,230,200,.35);line-height:1.5;">
+            Immagini via CDN TCGPlayer.
+          </div>
+          <button class="btn-secondary" onclick="changeSet()" style="margin-top:.3rem">🔄 Cambia set</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">📊 Sessione</div>
+      <div class="panel-body">
+        <div class="stats-grid">
+          <div class="stat-chip"><span class="val" id="stat-packs">0</span><span class="lbl">Buste aperte</span></div>
+          <div class="stat-chip"><span class="val" id="stat-cards">0</span><span class="lbl">Carte totali</span></div>
+          <div class="stat-chip"><span class="val" id="stat-sr">0</span><span class="lbl">SR ottenute</span></div>
+          <div class="stat-chip"><span class="val" id="stat-sec">0</span><span class="lbl">SEC / SP</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">🎨 Rarità</div>
+      <div class="panel-body">
+        <div class="legend">
+          <div class="legend-item"><div class="rarity-dot" style="background:var(--sec-color)"></div><span>SEC – Secret Rare</span></div>
+          <div class="legend-item"><div class="rarity-dot" style="background:var(--sp-color)"></div><span>SP – Special Card</span></div>
+          <div class="legend-item"><div class="rarity-dot" style="background:var(--sr-color)"></div><span>SR – Super Rare</span></div>
+          <div class="legend-item"><div class="rarity-dot" style="background:var(--l-color)"></div><span>L – Leader</span></div>
+          <div class="legend-item"><div class="rarity-dot" style="background:var(--r-color)"></div><span>R – Rare</span></div>
+          <div class="legend-item"><div class="rarity-dot" style="background:var(--event-color)"></div><span>EVENT – Evento</span></div>
+          <div class="legend-item"><div class="rarity-dot" style="background:var(--c-color)"></div><span>C – Common</span></div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <main class="content">
+
+    <!-- FILTRI -->
+    <div class="filters-panel" id="filtersPanel">
+      <div class="filters-row">
+        <div class="filter-group">
+          <span class="filter-label">Nome / #</span>
+          <input type="text" class="filter-input" id="fName" placeholder="Cerca…" oninput="applyFilters()" style="min-width:130px">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Rarità</span>
+          <select class="filter-select" id="fRarity" onchange="applyFilters()">
+            <option value="">Tutte</option>
+            <option>SEC</option><option>SP</option><option>SR</option>
+            <option>R</option><option>UC</option><option>C</option>
+            <option>L</option><option>TR</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Colore</span>
+          <select class="filter-select" id="fColor" onchange="applyFilters()">
+            <option value="">Tutti</option>
+            <option>Red</option><option>Blue</option><option>Green</option>
+            <option>Purple</option><option>Black</option><option>Yellow</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Tipo</span>
+          <select class="filter-select" id="fType" onchange="applyFilters()">
+            <option value="">Tutti</option>
+            <option>Character</option><option>Leader</option>
+            <option>Event</option><option>Stage</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Attributo</span>
+          <select class="filter-select" id="fAttr" onchange="applyFilters()">
+            <option value="">Tutti</option>
+            <option>Strike</option><option>Slash</option><option>Ranged</option>
+            <option>Special</option><option>Wisdom</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Counter / Blocker</span>
+          <select class="filter-select" id="fCounter" onchange="applyFilters()">
+            <option value="">Tutti</option>
+            <option value="1000">Counter +1000</option>
+            <option value="2000">Counter +2000</option>
+            <option value="any_counter">Qualsiasi Counter</option>
+            <option value="counter_desc">[Counter] (desc)</option>
+            <option value="blocker">Blocker</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Subtype</span>
+          <input type="text" class="filter-input" id="fSub" placeholder="es. Straw Hat" oninput="applyFilters()" style="min-width:105px">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Power</span>
+          <input type="number" class="filter-input" id="fPower" placeholder="es. 7000" oninput="applyFilters()" style="min-width:80px;height:28px">
+        </div>
+        <button class="filter-btn-reset" onclick="resetFilters()">✕ Reset</button>
+        <span class="filter-active-count" id="filterActiveCount"></span>
+      </div>
+    </div>
+
+    <!-- TAB NAV -->
+    <div class="tab-nav">
+      <button id="tabBtnSim" class="tab-btn active" onclick="switchTab('sim')">🎴 Simulatore</button>
+      <button id="tabBtnCl"  class="tab-btn"        onclick="switchTab('cl')">📋 Card List</button>
+      <button id="tabBtnFav" class="tab-btn"        onclick="switchTab('fav')">⭐ Preferiti<span class="tab-badge" id="favTabBadge"></span></button>
+    </div>
+
+    <!-- TAB: SIMULATORE -->
+    <div id="tabSim">
+      <div id="emptyState" class="empty-state">
+        <span class="icon">🎴</span>
+        <p>Scegli il numero di buste e premi <strong>Apri Buste</strong> per iniziare!</p>
+      </div>
+      <div id="pullResult" class="pull-result">
+        <div class="pull-header">
+          <span>Carte estratte</span>
+          <span class="pack-count-badge" id="pullLabel"></span>
+          <span class="sim-filter-badge" id="simFilterBadge"></span>
+          <button class="btn-export" id="btnExport" onclick="exportCards()">📋 Esporta</button>
+        </div>
+        <div class="rarity-summary" id="raritySummary"></div>
+        <div id="subtypeSection" class="subtype-section" style="display:none">
+          <div class="subtype-header">Subtype nelle buste</div>
+          <div class="subtype-grid" id="subtypeGrid"></div>
+        </div>
+        <div class="cards-grid" id="cardsGrid"></div>
+      </div>
+    </div>
+
+    <!-- TAB: CARD LIST -->
+    <div id="tabCl" style="display:none">
+      <div class="cl-grid" id="clGrid"></div>
+    </div>
+
+    <!-- TAB: PREFERITI -->
+    <div id="tabFav" style="display:none">
+      <div class="fav-header">
+        ⭐ Carte Preferite
+        <span class="fav-count-badge" id="favCount">0</span>
+        <span class="fav-hint">Aggiungi carte dalla Card List</span>
+      </div>
+      <div id="favEmpty" class="fav-empty">
+        Nessuna carta preferita ancora.<br>
+        Aprì la tab 📋 Card List e usa il bottone sotto ogni carta.
+      </div>
+      <div id="favGrid" class="fav-grid"></div>
+    </div>
+
+  </main>
+</div>
+
+<!-- MODALE CARTA -->
+<div class="card-modal-overlay" id="cardModalOverlay" onclick="closeModal(event)">
+  <div class="card-modal">
+    <div class="modal-wrapper">
+      <button class="modal-close" onclick="closeModal(null,true)">✕</button>
+      <img class="modal-img" id="modalImg" src="" alt="">
+    </div>
+    <div class="modal-body">
+      <div class="modal-name" id="modalName"></div>
+      <div class="modal-meta" id="modalMeta"></div>
+      <div class="modal-row" id="modalStats"></div>
+      <div class="modal-sub" id="modalSub"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

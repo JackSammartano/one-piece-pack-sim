@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — OPCG Pack Simulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<header>
+  <h1>Admin Dashboard</h1>
+  <p id="setTitle">Import Set & Cards</p>
+</header>
+
+<div class="top-bar" style="max-width:900px;">
+  <h2>⚙ Importa Set</h2>
+
+  <div class="auth-row">
+    <button class="btn-secondary" id="btnBack" onclick="location.href='./'">⬅ Torna alla app</button>
+    <button class="btn-secondary accent" id="btnLogout">🚪 Logout</button>
+    <span id="whoami"></span>
+  </div>
+
+  <div style="margin-top:1.5rem;display:grid;gap:1rem;max-width:500px;margin-left:auto;margin-right:auto;">
+    <div class="input-group" style="text-align:left;">
+      <label>Set Code (es. OP08, EB03)</label>
+      <input id="aSetCode" class="filter-input" style="height:40px;" placeholder="OP08">
+    </div>
+    <div class="input-group" style="text-align:left;">
+      <label>Nome Set</label>
+      <input id="aSetName" class="filter-input" style="height:40px;" placeholder="Two Legends">
+    </div>
+    <div class="input-group" style="text-align:left;">
+      <label>Release date (opzionale)</label>
+      <input id="aRelease" type="date" class="filter-input" style="height:40px;">
+    </div>
+    <div class="input-group" style="text-align:left;">
+      <label>JSON tcgcsv / TCGPlayer (Products)</label>
+      <input id="aFile" type="file" accept=".json,.txt" class="filter-input" style="height:40px;">
+      <div style="color:rgba(245,230,200,.4);font-size:.85rem;line-height:1.6;">
+        Carica il JSON Products scaricato da tcgcsv.com per il set.
+      </div>
+    </div>
+
+    <button class="btn-open" id="btnImport">⬆ Importa (Set + Cards)</button>
+
+    <div id="adminStatus" style="color:rgba(245,230,200,.6);font-size:.9rem;line-height:1.6;"></div>
+    <div id="adminError" class="top-error" style="display:none;"></div>
+  </div>
+</div>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
