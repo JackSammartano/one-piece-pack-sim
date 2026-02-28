@@ -248,8 +248,8 @@ async function init() {
     updateAuthUI();
 
     if (!session?.user && wasLogged) {
-      // Logout: rimuovi set salvato e cache
-      try { localStorage.removeItem(SET_KEY); } catch (_) {}
+      // Logout: rimuovi solo la cache sbusto (sessionStorage)
+      // Il SET_KEY rimane in localStorage per riauto-caricare il set al prossimo login
       try { sessionStorage.removeItem(CACHE_KEY); } catch (_) {}
     }
 
