@@ -25,19 +25,9 @@ setOnFavsChanged(() => {
 });
 setOnModalFavToggle((key) => toggleFav(key));
 
-// ── Window bridge per onclick inline ──────────────────────
+// ── Window bridge ─────────────────────────────────────────
 
-window.openPacks = () => {
-  if (!S.session?.user) {
-    showSimMessage('🔒', 'Effettua il login per aprire le buste.', true);
-    return;
-  }
-  if (!S.setCode) {
-    showSimMessage('🎴', 'Seleziona un set dal pannello laterale per iniziare.');
-    return;
-  }
-  _openPacks();
-};
+window.openPacks      = () => _openPacks();
 window.resetAll       = resetAll;
 window.switchTab      = switchTab;
 window.applyFilters   = applyFilters;
@@ -97,21 +87,24 @@ function buildSetOptions(sets) {
       ).join('');
 }
 
-function populateSetSelects(sets) {
-  const html = buildSetOptions(sets);
-  const simSel = document.getElementById('simSetSelect');
-  const clSel  = document.getElementById('clSetSelect');
-  if (simSel) simSel.innerHTML = html;
-  if (clSel)  clSel.innerHTML  = html;
+/** Popola e sincronizza tutti e tre i selettori set con lo stesso valore. */
+function syncSetSelectors(code) {
+  ['simSetSelect', 'clSetSelect', 'favSetSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = code || '';
+  });
 }
 
+// ── Auth UI ───────────────────────────────────────────────
+
 function updateAuthUI() {
+  const isLogged = !!S.session?.user;
   const btnLogin  = document.getElementById('btnLogin');
   const btnLogout = document.getElementById('btnLogout');
   const whoami    = document.getElementById('whoami');
   const adminLink = document.getElementById('adminLink');
 
-  if (S.session?.user) {
+  if (isLogged) {
     btnLogin.style.display  = 'none';
     btnLogout.style.display = '';
     whoami.textContent = S.session.user.email;
@@ -120,57 +113,41 @@ function updateAuthUI() {
     btnLogout.style.display = 'none';
     whoami.textContent = 'Non loggato';
   }
+
+  // Admin link visibile solo agli admin
   if (adminLink) adminLink.style.display = S.profile?.is_admin ? '' : 'none';
-}
 
-function showSimMessage(icon, text, showLoginBtn = false) {
-  const emptyState = document.getElementById('emptyState');
-  const pullResult = document.getElementById('pullResult');
-  if (pullResult) pullResult.classList.remove('active');
-  if (emptyState) {
-    emptyState.innerHTML = `
-      <span class="icon">${icon}</span>
-      <p>${text}</p>
-      ${showLoginBtn ? '<button class="btn-open" id="btnLoginGate" style="margin-top:1rem;">🔑 Login con Google</button>' : ''}
-    `;
-    emptyState.style.display = '';
-    if (showLoginBtn) {
-      document.getElementById('btnLoginGate')?.addEventListener('click', signInWithGoogle);
-    }
-  }
-}
-
-function showClEmpty(visible) {
-  const el   = document.getElementById('clEmpty');
-  const grid = document.getElementById('clGrid');
-  if (el)   el.style.display   = visible ? '' : 'none';
-  if (grid) grid.style.display = visible ? 'none' : '';
+  // Sim controls abilitati solo se loggato
+  const simSel  = document.getElementById('simSetSelect');
+  const btnOpen = document.getElementById('btnOpenPacks');
+  if (simSel)  simSel.disabled  = !isLogged;
+  if (btnOpen) btnOpen.disabled = !isLogged;
 }
 
 // ── Set loading ───────────────────────────────────────────
 
 async function loadSets() {
   const { data, error } = await supabase
-    .from('sets')
-    .select('set_code,name,release_date');
+    .from('sets').select('set_code,name,release_date');
 
-  if (error || !data || data.length === 0) {
-    const simSel = document.getElementById('simSetSelect');
-    if (simSel) simSel.innerHTML = '<option value="">Errore caricamento set</option>';
-    return;
-  }
+  if (error || !data || data.length === 0) return;
+
   allSets = data;
-  populateSetSelects(data);
+  const html = buildSetOptions(data);
+  ['simSetSelect', 'clSetSelect', 'favSetSelect'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = html;
+  });
 }
 
-async function loadSimSet(code) {
+/** Carica le carte di un set e aggiorna tutta l'app. */
+async function loadSet(code) {
   if (!code) return;
 
   const { data, error } = await supabase
     .from('cards').select('*').eq('set_code', code);
 
-  if (error) { showSimMessage('⚠', 'Errore caricando le carte: ' + error.message); return; }
-  if (!data || data.length === 0) { showSimMessage('⚠', 'Nessuna carta trovata per ' + code); return; }
+  if (error || !data || data.length === 0) return;
 
   S.setCode = code;
   S.DB = data.map(rowToCard);
@@ -179,52 +156,13 @@ async function loadSimSet(code) {
   const setName = allSets.find(s => s.set_code === code)?.name || code;
   document.getElementById('setTitle').textContent = `Pack Simulator · ${code} · ${setName}`;
 
+  // Sincronizza tutte le tendine
+  syncSetSelectors(code);
+
   resetAll();
   await loadFavs();
-
-  // Sincronizza Card List con il set del simulatore (se non ha un set proprio)
-  if (!S.clSetCode) {
-    S.clCards = [...S.POOL];
-    const clSel = document.getElementById('clSetSelect');
-    if (clSel) clSel.value = code;
-    showClEmpty(false);
-    renderCardListGrid();
-  }
-
-  renderFavs();
-}
-
-async function loadClSet(code) {
-  S.clSetCode = code;
-
-  if (!code) {
-    // Torna al set del simulatore se presente
-    if (S.POOL.length > 0) {
-      S.clCards = [...S.POOL];
-      showClEmpty(false);
-      renderCardListGrid();
-    } else {
-      S.clCards = [];
-      showClEmpty(true);
-    }
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from('cards').select('*')
-    .eq('set_code', code)
-    .eq('is_alt', false)
-    .eq('out_of_set', false);
-
-  if (error || !data || data.length === 0) {
-    S.clCards = [];
-    showClEmpty(true);
-    return;
-  }
-
-  S.clCards = data.map(rowToCard);
-  showClEmpty(false);
   renderCardListGrid();
+  renderFavs();
 }
 
 // ── Init ──────────────────────────────────────────────────
@@ -233,12 +171,9 @@ async function init() {
   document.getElementById('btnLogin').addEventListener('click', signInWithGoogle);
   document.getElementById('btnLogout').addEventListener('click', signOut);
 
-  document.getElementById('simSetSelect').addEventListener('change', async (e) => {
-    if (e.target.value) await loadSimSet(e.target.value);
-  });
-
-  document.getElementById('clSetSelect').addEventListener('change', async (e) => {
-    await loadClSet(e.target.value);
+  // I tre selettori set chiamano tutti loadSet — sono sincronizzati
+  ['simSetSelect', 'clSetSelect', 'favSetSelect'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', (e) => loadSet(e.target.value));
   });
 
   document.addEventListener('keydown', e => {
@@ -246,7 +181,6 @@ async function init() {
   });
 
   await loadSets();
-  showClEmpty(true);
 
   onAuthStateChange(async (session) => {
     S.session = session;
@@ -265,18 +199,4 @@ async function init() {
   updateAuthUI();
 }
 
-// ── Entry point: popup OAuth o app normale ────────────────
-// Se la pagina è aperta come popup (dopo redirect OAuth di Google),
-// Supabase processa i token dall'URL e chiude il popup.
-// La finestra principale riceve la sessione via onAuthStateChange.
-
-if (window.opener && window.opener !== window) {
-  supabase.auth.onAuthStateChange((event) => {
-    if (event === 'SIGNED_IN') window.close();
-  });
-  supabase.auth.getSession().then(({ data }) => {
-    if (data.session) window.close();
-  });
-} else {
-  init();
-}
+init();

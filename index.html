@@ -32,7 +32,7 @@
         <div class="sim-control">
           <div class="input-group">
             <label for="simSetSelect">Set da sbustare</label>
-            <select id="simSetSelect" class="filter-select" style="height:36px;">
+            <select id="simSetSelect" class="filter-select" style="height:36px;" disabled>
               <option value="">Caricamento…</option>
             </select>
           </div>
@@ -40,7 +40,7 @@
             <label for="packCount">Numero di buste</label>
             <input type="number" id="packCount" value="6" min="1" max="999">
           </div>
-          <button class="btn-open" onclick="openPacks()">🎴 Apri Buste</button>
+          <button class="btn-open" id="btnOpenPacks" onclick="openPacks()" disabled>🎴 Apri Buste</button>
           <button class="btn-secondary" onclick="resetAll()">↺ Reset sessione</button>
           <div style="font-size:.8rem;color:rgba(245,230,200,.35);line-height:1.5;">
             Immagini via CDN TCGPlayer.
@@ -155,7 +155,7 @@
     <div id="tabSim">
       <div id="emptyState" class="empty-state">
         <span class="icon">🎴</span>
-        <p>Seleziona un set dal pannello laterale e premi <strong>Apri Buste</strong> per iniziare!</p>
+        <p>Effettua il login e seleziona un set per iniziare a sbustare!</p>
       </div>
       <div id="pullResult" class="pull-result">
         <div class="pull-header">
@@ -175,17 +175,11 @@
 
     <!-- TAB: CARD LIST -->
     <div id="tabCl" style="display:none">
-      <div class="cl-set-bar">
-        <div>
-          <label for="clSetSelect">Filtra per set</label>
-          <select id="clSetSelect" class="filter-select">
-            <option value="">Scegli un set…</option>
-          </select>
-        </div>
-      </div>
-      <div id="clEmpty" class="empty-state" style="display:none">
-        <span class="icon">📋</span>
-        <p>Seleziona un set dalla tendina oppure apri un set nel simulatore.</p>
+      <div class="tab-set-bar">
+        <span class="filter-label">Set</span>
+        <select id="clSetSelect" class="filter-select" style="height:28px;min-width:220px;">
+          <option value="">Scegli un set…</option>
+        </select>
       </div>
       <div class="cl-grid" id="clGrid"></div>
     </div>
@@ -196,6 +190,12 @@
         ⭐ Carte Preferite
         <span class="fav-count-badge" id="favCount">0</span>
         <span class="fav-hint">Aggiungi carte dalla Card List</span>
+      </div>
+      <div class="tab-set-bar">
+        <span class="filter-label">Set</span>
+        <select id="favSetSelect" class="filter-select" style="height:28px;min-width:220px;">
+          <option value="">Scegli un set…</option>
+        </select>
       </div>
       <div id="favEmpty" class="fav-empty">
         Nessuna carta preferita ancora.<br>

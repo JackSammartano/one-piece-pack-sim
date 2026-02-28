@@ -335,15 +335,10 @@
   .sim-filter-badge{font-size:.78rem;color:rgba(245,230,200,.38);font-family:'Cinzel',serif;margin-left:.3rem;}
   @media(max-width:900px){.main-layout{grid-template-columns:1fr;}}
 
-  /* ── CARD LIST SET BAR ─────────────────────────────────── */
-  .cl-set-bar{display:flex;align-items:flex-end;gap:.7rem;flex-wrap:wrap;margin-bottom:1rem;
-    padding:.7rem 1rem;background:rgba(13,10,6,.6);border:1px solid rgba(201,168,76,.15);border-radius:4px;}
-  .cl-set-bar label{font-family:'Cinzel',serif;font-size:.65rem;letter-spacing:.1em;
-    color:rgba(201,168,76,.55);text-transform:uppercase;margin-bottom:.22rem;display:block;}
-  .cl-set-bar select{height:32px;min-width:240px;}
+  /* ── SET BAR nelle tab CL e Preferiti ──────────────────── */
+  .tab-set-bar{display:flex;align-items:center;gap:.7rem;margin-bottom:1rem;flex-wrap:wrap;}
 
-  /* ── AUTH GATE (messaggio login nel sim tab) ─────────── */
-  .auth-gate-msg{text-align:center;padding:3rem 2rem;color:rgba(245,230,200,.3);}
-  .auth-gate-msg .icon{font-size:3rem;margin-bottom:.8rem;display:block;}
-  .auth-gate-msg p{font-size:1rem;font-style:italic;margin-bottom:1.2rem;}
-  .auth-gate-msg .btn-open{display:inline-block;padding:.75rem 1.8rem;font-size:.9rem;}
+  /* ── Controlli sim disabilitati (non loggato) ────────── */
+  select:disabled,.btn-open:disabled{opacity:.35;cursor:not-allowed;}
+  .btn-open:disabled:hover{transform:none;box-shadow:none;}
+  .btn-open:disabled::before{opacity:0;}

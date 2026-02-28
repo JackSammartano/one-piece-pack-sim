@@ -106,11 +106,11 @@ export function renderPullResult(cards, nPacks) {
  * Rendering griglia Card List.
  */
 export function renderCardListGrid() {
-  const cards = filterPool(S.clCards);
+  const cards = filterPool(S.POOL);
   const countEl = document.getElementById('filterActiveCount');
   if (countEl) {
     const active = hasActiveFilters(getFilters());
-    countEl.textContent = active ? `${cards.length} / ${S.clCards.length} carte` : '';
+    countEl.textContent = active ? `${cards.length} / ${S.POOL.length} carte` : '';
   }
 
   document.getElementById('clGrid').innerHTML = cards.map(c => {

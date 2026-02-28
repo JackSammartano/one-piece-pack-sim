@@ -4,15 +4,11 @@
 import { supabase } from './config.js';
 
 export async function signInWithGoogle() {
-  const { data, error } = await supabase.auth.signInWithOAuth({
+  const { error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
-    options: {
-      redirectTo: window.location.origin,
-      skipBrowserRedirect: true
-    }
+    options: { redirectTo: window.location.origin }
   });
-  if (error) { alert(error.message); return; }
-  window.open(data.url, 'google-oauth', 'width=500,height=650,scrollbars=yes');
+  if (error) alert(error.message);
 }
 
 export async function signOut() {
