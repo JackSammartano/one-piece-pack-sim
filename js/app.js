@@ -8,7 +8,7 @@ import { signInWithGoogle, signOut, onAuthStateChange, getMyProfile } from './au
 import { parseDB } from './parser.js';
 import { buildPools } from './pools.js';
 import { applyFilters, resetFilters, setRenderCallbacks } from './filters.js';
-import { openPacks, resetAll, setOnPacksOpened } from './simulator.js';
+import { openPacks as _openPacks, resetAll, setOnPacksOpened } from './simulator.js';
 import { renderPullResult, renderCardListGrid, renderFavs } from './render.js';
 import { openModal, closeModal, modalToggleFav, setOnModalFavToggle } from './modal.js';
 import { loadFavs, removeFav, updateFavNote, clToggleFav, toggleFav, setOnFavsChanged } from './favorites.js';
@@ -25,81 +25,89 @@ setOnPacksOpened((cards, n) => renderPullResult(cards, n));
 
 setOnFavsChanged(() => {
   renderFavs();
-  // Aggiorna card list solo se visibile
   const tabCl = document.getElementById('tabCl');
   if (tabCl && tabCl.style.display !== 'none') renderCardListGrid();
 });
 
 setOnModalFavToggle((key) => toggleFav(key));
 
+// ── Set options helpers ───────────────────────────────────
+
+let allSets = []; // cache lista set
+
+/**
+ * Raggruppa i set per prefisso e genera HTML con <optgroup>.
+ * Ordina per prefisso alfabetico, poi per set_code numerico dentro ogni gruppo.
+ */
+function buildSetOptions(sets, includeBlank = true) {
+  const groups = {};
+  for (const s of sets) {
+    const prefix = s.set_code.replace(/[0-9].*/, '') || 'OTHER';
+    if (!groups[prefix]) groups[prefix] = [];
+    groups[prefix].push(s);
+  }
+  for (const g of Object.values(groups)) {
+    g.sort((a, b) => a.set_code.localeCompare(b.set_code, undefined, { numeric: true }));
+  }
+  const blank = includeBlank ? '<option value="">Scegli un set…</option>' : '';
+  return blank + Object.entries(groups)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([prefix, list]) =>
+      `<optgroup label="${prefix}">${
+        list.map(s => `<option value="${s.set_code}">${s.set_code} — ${s.name}</option>`).join('')
+      }</optgroup>`
+    ).join('');
+}
+
+function populateSetSelects(sets) {
+  const simSel = document.getElementById('simSetSelect');
+  const clSel  = document.getElementById('clSetSelect');
+  if (simSel) simSel.innerHTML = buildSetOptions(sets, true);
+  if (clSel)  clSel.innerHTML  = buildSetOptions(sets, true);
+}
+
 // ── Auth UI ───────────────────────────────────────────────
 
 function updateAuthUI() {
-  const btnLogin = document.getElementById('btnLogin');
+  const btnLogin  = document.getElementById('btnLogin');
   const btnLogout = document.getElementById('btnLogout');
-  const whoami = document.getElementById('whoami');
+  const whoami    = document.getElementById('whoami');
   const adminLink = document.getElementById('adminLink');
 
   if (S.session?.user) {
-    btnLogin.style.display = 'none';
+    btnLogin.style.display  = 'none';
     btnLogout.style.display = '';
-    whoami.textContent = `Loggato come: ${S.session.user.email}`;
+    whoami.textContent = S.session.user.email;
   } else {
-    btnLogin.style.display = '';
+    btnLogin.style.display  = '';
     btnLogout.style.display = 'none';
     whoami.textContent = 'Non loggato';
   }
 
-  adminLink.style.display = S.profile?.is_admin ? '' : 'none';
+  if (adminLink) adminLink.style.display = S.profile?.is_admin ? '' : 'none';
 }
 
-// ── Set loading ───────────────────────────────────────────
+// ── Sim set loading ───────────────────────────────────────
 
-function showTopError(msg) {
-  const el = document.getElementById('topError');
-  el.textContent = '⚠ ' + msg;
-  el.style.display = 'block';
-}
-
-function clearTopError() {
-  const el = document.getElementById('topError');
-  el.style.display = 'none';
-  el.textContent = '';
-}
-
-function setMainVisible(visible) {
-  document.getElementById('mainLayout').style.display = visible ? 'grid' : 'none';
-  document.getElementById('topBar').style.display = visible ? 'none' : '';
-}
-
-async function loadSets() {
-  clearTopError();
-  const sel = document.getElementById('setSelect');
-  sel.innerHTML = '<option>Caricamento…</option>';
-
-  const { data, error } = await supabase
-    .from('sets')
-    .select('set_code,name,release_date')
-    .order('release_date', { ascending: false });
-
-  if (error) {
-    showTopError('Errore caricando i set: ' + error.message);
-    sel.innerHTML = '<option value="">Errore</option>';
-    return;
+function showSimMessage(icon, text, showLoginBtn = false) {
+  const emptyState  = document.getElementById('emptyState');
+  const pullResult  = document.getElementById('pullResult');
+  if (pullResult) pullResult.classList.remove('active');
+  if (emptyState) {
+    emptyState.innerHTML = `
+      <span class="icon">${icon}</span>
+      <p>${text}</p>
+      ${showLoginBtn ? '<button class="btn-open" id="btnLoginGate" style="margin-top:1rem;">🔑 Login con Google</button>' : ''}
+    `;
+    emptyState.style.display = '';
+    if (showLoginBtn) {
+      document.getElementById('btnLoginGate')?.addEventListener('click', signInWithGoogle);
+    }
   }
-
-  if (!data || data.length === 0) {
-    sel.innerHTML = '<option value="">Nessun set disponibile</option>';
-    return;
-  }
-
-  sel.innerHTML = data.map(s =>
-    `<option value="${s.set_code}">${s.set_code} — ${s.name}</option>`
-  ).join('');
 }
 
-async function loadSetFromDB(code) {
-  clearTopError();
+async function loadSimSet(code) {
+  if (!code) return;
 
   const { data, error } = await supabase
     .from('cards')
@@ -107,59 +115,133 @@ async function loadSetFromDB(code) {
     .eq('set_code', code);
 
   if (error) {
-    showTopError('Errore caricando carte: ' + error.message);
+    showSimMessage('⚠', 'Errore caricando le carte: ' + error.message);
     return;
   }
-
   if (!data || data.length === 0) {
-    showTopError('Nessuna carta trovata per il set ' + code);
+    showSimMessage('⚠', 'Nessuna carta trovata per il set ' + code);
     return;
   }
 
   S.setCode = code;
 
-  // Trasforma righe DB in formato carta normalizzato
   S.DB = data.map(row => ({
-    id: Number(row.product_id),
-    name: row.name || '',
-    num: row.num || '',
-    rarity: row.rarity || 'C',
-    color: row.color || '',
+    id:       Number(row.product_id),
+    name:     row.name || '',
+    num:      row.num || '',
+    rarity:   row.rarity || 'C',
+    color:    row.color || '',
     cardType: row.card_type || 'Character',
-    sub: row.sub || '',
-    cost: row.cost,
-    power: row.power,
-    life: row.life,
-    attr: row.attr || '',
-    counter: row.counter,
-    desc: row.description || '',
-    url: row.url || `https://www.tcgplayer.com/product/${row.product_id}`,
+    sub:      row.sub || '',
+    cost:     row.cost,
+    power:    row.power,
+    life:     row.life,
+    attr:     row.attr || '',
+    counter:  row.counter,
+    desc:     row.description || '',
+    url:      row.url || `https://www.tcgplayer.com/product/${row.product_id}`,
     imgRemote: row.img_remote || `https://tcgplayer-cdn.tcgplayer.com/product/${row.product_id}_400w.jpg`,
-    isAlt: !!row.is_alt,
+    isAlt:    !!row.is_alt,
     outOfSet: !!row.out_of_set
   }));
 
   buildPools();
 
+  const setName = allSets.find(s => s.set_code === code)?.name || code;
   document.getElementById('setTitle').textContent =
-    `Pack Simulator · Set ${S.setCode} · ${S.DB.length} carte`;
+    `Pack Simulator · ${code} · ${setName}`;
 
   resetAll();
   await loadFavs();
-  renderCardListGrid();
+
+  // Se la card list non ha un set proprio, sincronizza con il sim set
+  if (!S.clSetCode) {
+    S.clCards = [...S.POOL];
+    renderCardListGrid();
+  }
+
   renderFavs();
-  setMainVisible(true);
 }
 
-function changeSet() {
-  setMainVisible(false);
-  S.DB = [];
-  S.POOL = [];
-  S.ALT_MAP = {};
-  S.pools = {};
-  S.setCode = '';
-  resetAll();
-  document.getElementById('setTitle').textContent = 'Pack Simulator';
+// ── Card List set loading ─────────────────────────────────
+
+async function loadClSet(code) {
+  S.clSetCode = code;
+
+  if (!code) {
+    // Nessun set CL → usa il sim set se presente, altrimenti empty
+    if (S.POOL.length > 0) {
+      S.clCards = [...S.POOL];
+    } else {
+      S.clCards = [];
+      showClEmpty(true);
+      return;
+    }
+    renderCardListGrid();
+    showClEmpty(false);
+    return;
+  }
+
+  // Carica carte per il set CL
+  const { data, error } = await supabase
+    .from('cards')
+    .select('*')
+    .eq('set_code', code);
+
+  if (error || !data || data.length === 0) {
+    S.clCards = [];
+    showClEmpty(true);
+    return;
+  }
+
+  S.clCards = data
+    .filter(row => !row.out_of_set && !row.is_alt)
+    .map(row => ({
+      id:       Number(row.product_id),
+      name:     row.name || '',
+      num:      row.num || '',
+      rarity:   row.rarity || 'C',
+      color:    row.color || '',
+      cardType: row.card_type || 'Character',
+      sub:      row.sub || '',
+      cost:     row.cost,
+      power:    row.power,
+      life:     row.life,
+      attr:     row.attr || '',
+      counter:  row.counter,
+      desc:     row.description || '',
+      url:      row.url || `https://www.tcgplayer.com/product/${row.product_id}`,
+      imgRemote: row.img_remote || `https://tcgplayer-cdn.tcgplayer.com/product/${row.product_id}_400w.jpg`,
+      isAlt:    !!row.is_alt,
+      outOfSet: !!row.out_of_set
+    }));
+
+  showClEmpty(false);
+  renderCardListGrid();
+}
+
+function showClEmpty(visible) {
+  const el = document.getElementById('clEmpty');
+  const grid = document.getElementById('clGrid');
+  if (el)   el.style.display   = visible ? '' : 'none';
+  if (grid) grid.style.display = visible ? 'none' : '';
+}
+
+// ── loadSets ──────────────────────────────────────────────
+
+async function loadSets() {
+  const { data, error } = await supabase
+    .from('sets')
+    .select('set_code,name,release_date');
+
+  if (error || !data || data.length === 0) {
+    const simSel = document.getElementById('simSetSelect');
+    if (simSel) simSel.innerHTML = '<option value="">Errore caricamento set</option>';
+    return;
+  }
+
+  allSets = data;
+  populateSetSelects(data);
 }
 
 // ── Init ──────────────────────────────────────────────────
@@ -169,11 +251,15 @@ async function init() {
   document.getElementById('btnLogin').addEventListener('click', signInWithGoogle);
   document.getElementById('btnLogout').addEventListener('click', signOut);
 
-  // Set selector
-  document.getElementById('btnLoadSet').addEventListener('click', async () => {
-    const code = document.getElementById('setSelect').value;
-    if (!code) return;
-    await loadSetFromDB(code);
+  // Sim set selector
+  document.getElementById('simSetSelect').addEventListener('change', async (e) => {
+    const code = e.target.value;
+    if (code) await loadSimSet(code);
+  });
+
+  // Card List set selector
+  document.getElementById('clSetSelect').addEventListener('change', async (e) => {
+    await loadClSet(e.target.value);
   });
 
   // Escape key per modale
@@ -184,7 +270,10 @@ async function init() {
   // Carica lista set
   await loadSets();
 
-  // Auth state
+  // Stato iniziale card list: empty
+  showClEmpty(true);
+
+  // Auth state listener
   onAuthStateChange(async (session) => {
     S.session = session;
     S.profile = session?.user ? await getMyProfile() : null;
@@ -207,17 +296,28 @@ async function init() {
 init();
 
 // ── Window bridge per onclick inline ──────────────────────
-window.openPacks = openPacks;
-window.resetAll = resetAll;
+
+window.openPacks = () => {
+  if (!S.session?.user) {
+    showSimMessage('🔒', 'Effettua il login per aprire le buste.', true);
+    return;
+  }
+  if (!S.setCode) {
+    showSimMessage('🎴', 'Seleziona un set dal pannello laterale per iniziare.');
+    return;
+  }
+  _openPacks();
+};
+
+window.resetAll  = resetAll;
 window.switchTab = switchTab;
-window.applyFilters = applyFilters;
-window.resetFilters = resetFilters;
-window.openModal = openModal;
-window.closeModal = closeModal;
+window.applyFilters  = applyFilters;
+window.resetFilters  = resetFilters;
+window.openModal     = openModal;
+window.closeModal    = closeModal;
 window.modalToggleFav = modalToggleFav;
-window.toggleFav = toggleFav;
-window.removeFav = removeFav;
+window.toggleFav     = toggleFav;
+window.removeFav     = removeFav;
 window.updateFavNote = updateFavNote;
-window.clToggleFav = clToggleFav;
-window.exportCards = exportCards;
-window.changeSet = changeSet;
+window.clToggleFav   = clToggleFav;
+window.exportCards   = exportCards;

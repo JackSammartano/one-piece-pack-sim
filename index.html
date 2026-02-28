@@ -10,33 +10,17 @@
 <body>
 
 <header>
-  <h1>One Piece Card Game</h1>
-  <p id="setTitle">Pack Simulator</p>
-</header>
-
-<!-- TOP BAR: AUTH + SET SELECT -->
-<div class="top-bar" id="topBar">
-  <h2>⚓ Account & Set</h2>
-
-  <div class="auth-row">
+  <div class="header-brand">
+    <h1>One Piece Card Game</h1>
+    <p id="setTitle">Pack Simulator</p>
+  </div>
+  <nav class="header-auth">
+    <span id="whoami">Non loggato</span>
     <button class="btn-secondary accent" id="btnLogin">🔑 Login con Google</button>
     <button class="btn-secondary" id="btnLogout" style="display:none;">🚪 Logout</button>
-    <span id="whoami">Non loggato</span>
-  </div>
-
-  <div class="set-row">
-    <div class="input-group" style="min-width:280px;text-align:left;">
-      <label for="setSelect">Seleziona un set</label>
-      <select id="setSelect" class="filter-select" style="height:40px;min-width:280px;">
-        <option value="">Caricamento…</option>
-      </select>
-    </div>
-    <button class="btn-open" id="btnLoadSet">📦 Carica Set</button>
-    <a href="./admin.html" id="adminLink" style="display:none;">⚙ Dashboard Admin ↗</a>
-  </div>
-
-  <div id="topError" class="top-error" style="display:none;"></div>
-</div>
+    <a href="./admin.html" id="adminLink" style="display:none;">⚙ Admin</a>
+  </nav>
+</header>
 
 <!-- LAYOUT PRINCIPALE -->
 <div class="main-layout" id="mainLayout">
@@ -47,6 +31,12 @@
       <div class="panel-body">
         <div class="sim-control">
           <div class="input-group">
+            <label for="simSetSelect">Set da sbustare</label>
+            <select id="simSetSelect" class="filter-select" style="height:36px;">
+              <option value="">Caricamento…</option>
+            </select>
+          </div>
+          <div class="input-group">
             <label for="packCount">Numero di buste</label>
             <input type="number" id="packCount" value="6" min="1" max="999">
           </div>
@@ -55,7 +45,6 @@
           <div style="font-size:.8rem;color:rgba(245,230,200,.35);line-height:1.5;">
             Immagini via CDN TCGPlayer.
           </div>
-          <button class="btn-secondary" onclick="changeSet()" style="margin-top:.3rem">🔄 Cambia set</button>
         </div>
       </div>
     </div>
@@ -166,7 +155,7 @@
     <div id="tabSim">
       <div id="emptyState" class="empty-state">
         <span class="icon">🎴</span>
-        <p>Scegli il numero di buste e premi <strong>Apri Buste</strong> per iniziare!</p>
+        <p>Seleziona un set dal pannello laterale e premi <strong>Apri Buste</strong> per iniziare!</p>
       </div>
       <div id="pullResult" class="pull-result">
         <div class="pull-header">
@@ -186,6 +175,18 @@
 
     <!-- TAB: CARD LIST -->
     <div id="tabCl" style="display:none">
+      <div class="cl-set-bar">
+        <div>
+          <label for="clSetSelect">Filtra per set</label>
+          <select id="clSetSelect" class="filter-select">
+            <option value="">Scegli un set…</option>
+          </select>
+        </div>
+      </div>
+      <div id="clEmpty" class="empty-state" style="display:none">
+        <span class="icon">📋</span>
+        <p>Seleziona un set dalla tendina oppure apri un set nel simulatore.</p>
+      </div>
       <div class="cl-grid" id="clGrid"></div>
     </div>
 
@@ -198,7 +199,7 @@
       </div>
       <div id="favEmpty" class="fav-empty">
         Nessuna carta preferita ancora.<br>
-        Aprì la tab 📋 Card List e usa il bottone sotto ogni carta.
+        Apri la tab 📋 Card List e usa il bottone sotto ogni carta.
       </div>
       <div id="favGrid" class="fav-grid"></div>
     </div>

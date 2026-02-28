@@ -22,6 +22,10 @@ export const S = {
   // UI
   modalCard: null,
 
+  // Card List (indipendente dal simulatore)
+  clCards: [],     // carte da mostrare nella card list
+  clSetCode: '',   // set_code selezionato nella CL ('' = usa sim set)
+
   // Auth (Supabase)
   session: null,
   profile: null
