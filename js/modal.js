@@ -71,22 +71,25 @@ export function setOnModalFavToggle(fn) { onModalFavToggle = fn; }
 
 /**
  * Toggle preferito dal modale. Aggiorna UI modale e sincronizza Card List.
+ * Usa aggiornamento ottimistico: lo stato atteso è l'opposto di quello corrente.
  */
 export function modalToggleFav(key) {
+  // Stato atteso dopo il toggle (ottimistico, prima che l'async completi)
+  const willBeFav = !S.favs[key];
+
   onModalFavToggle(key);
 
-  const isFav = !!S.favs[key];
   const btn = document.getElementById('modalFavBtn');
   if (btn) {
-    btn.textContent = isFav ? '✕ Rimuovi dai preferiti' : '⭐ Aggiungi ai preferiti';
-    btn.className = 'modal-btn' + (isFav ? ' danger' : '');
+    btn.textContent = willBeFav ? '✕ Rimuovi dai preferiti' : '⭐ Aggiungi ai preferiti';
+    btn.className = 'modal-btn' + (willBeFav ? ' danger' : '');
   }
 
   // Sincronizza bottone nella Card List
   const gb = document.querySelector(`.cl-fav-toggle[data-key="${key}"]`);
   if (gb) {
-    gb.classList.toggle('active', isFav);
-    gb.querySelector('.cl-fav-star').textContent = isFav ? '⭐' : '☆';
-    gb.querySelector('.cl-fav-label').textContent = isFav ? 'Nei preferiti' : 'Aggiungi ai preferiti';
+    gb.classList.toggle('active', willBeFav);
+    gb.querySelector('.cl-fav-star').textContent = willBeFav ? '⭐' : '☆';
+    gb.querySelector('.cl-fav-label').textContent = willBeFav ? 'Nei preferiti' : 'Aggiungi ai preferiti';
   }
 }

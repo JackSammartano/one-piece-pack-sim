@@ -155,20 +155,24 @@ export async function updateFavNote(key, note) {
  */
 export async function clToggleFav(e, key) {
   e.stopPropagation();
+  // Salva il riferimento prima dell'await: e.currentTarget diventa null dopo la microtask
+  const btn = e.currentTarget;
   const add = !S.favs[key];
 
   if (add) {
-    const c = S.POOL.find(p => favCardKey(p) === key);
+    const c = S.POOL.find(p => favCardKey(p) === key)
+           || S.DB.find(p => favCardKey(p) === key);
     if (!c) return;
     await addOrUpdateFav(c, '');
   } else {
     await removeFav(key);
   }
 
-  const btn = e.currentTarget;
-  btn.classList.toggle('active', add);
-  btn.querySelector('.cl-fav-star').textContent = add ? '⭐' : '☆';
-  btn.querySelector('.cl-fav-label').textContent = add ? 'Nei preferiti' : 'Aggiungi ai preferiti';
+  if (btn) {
+    btn.classList.toggle('active', add);
+    btn.querySelector('.cl-fav-star').textContent = add ? '⭐' : '☆';
+    btn.querySelector('.cl-fav-label').textContent = add ? 'Nei preferiti' : 'Aggiungi ai preferiti';
+  }
 }
 
 /**
