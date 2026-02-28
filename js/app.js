@@ -27,7 +27,13 @@ setOnModalFavToggle((key) => toggleFav(key));
 
 // ── Window bridge ─────────────────────────────────────────
 
-window.openPacks      = () => _openPacks();
+window.openPacks = () => {
+  if (!S.setCode || !S.pools.R) {
+    document.getElementById('setTitle').textContent = '⚠ Seleziona un set prima di sbustare';
+    return;
+  }
+  _openPacks();
+};
 window.resetAll       = resetAll;
 window.switchTab      = switchTab;
 window.applyFilters   = applyFilters;
@@ -144,17 +150,32 @@ async function loadSets() {
 async function loadSet(code) {
   if (!code) return;
 
+  // Disabilita il bottone durante il caricamento
+  const btnOpen = document.getElementById('btnOpenPacks');
+  if (btnOpen) btnOpen.disabled = true;
+
   const { data, error } = await supabase
     .from('cards').select('*').eq('set_code', code);
 
-  if (error || !data || data.length === 0) return;
+  if (error) {
+    console.error('Errore caricamento carte:', error.message);
+    document.getElementById('setTitle').textContent = '⚠ Errore caricamento set';
+    if (btnOpen && S.session?.user) btnOpen.disabled = false;
+    return;
+  }
+  if (!data || data.length === 0) {
+    document.getElementById('setTitle').textContent = `⚠ Nessuna carta trovata per ${code}`;
+    if (btnOpen && S.session?.user) btnOpen.disabled = false;
+    return;
+  }
 
   S.setCode = code;
   S.DB = data.map(rowToCard);
   buildPools();
 
   const setName = allSets.find(s => s.set_code === code)?.name || code;
-  document.getElementById('setTitle').textContent = `Pack Simulator · ${code} · ${setName}`;
+  document.getElementById('setTitle').textContent =
+    `Pack Simulator · ${code} · ${setName} (${S.POOL.length} carte)`;
 
   // Sincronizza tutte le tendine
   syncSetSelectors(code);
@@ -163,6 +184,9 @@ async function loadSet(code) {
   await loadFavs();
   renderCardListGrid();
   renderFavs();
+
+  // Riabilita il bottone solo se loggato
+  if (btnOpen && S.session?.user) btnOpen.disabled = false;
 }
 
 // ── Init ──────────────────────────────────────────────────
