@@ -66,6 +66,38 @@ function populateSetSelects(sets) {
   if (clSel)  clSel.innerHTML  = buildSetOptions(sets, true);
 }
 
+// ── State persistence pre/post OAuth redirect ─────────────
+
+function saveStateBeforeRedirect() {
+  const activeTab = document.getElementById('tabBtnCl')?.classList.contains('active') ? 'cl'
+    : document.getElementById('tabBtnFav')?.classList.contains('active') ? 'fav' : 'sim';
+  sessionStorage.setItem('opcg_pre_auth', JSON.stringify({
+    simSetCode: S.setCode,
+    clSetCode:  S.clSetCode,
+    tab:        activeTab
+  }));
+}
+
+async function restoreStateAfterRedirect() {
+  const raw = sessionStorage.getItem('opcg_pre_auth');
+  if (!raw) return false;
+  sessionStorage.removeItem('opcg_pre_auth');
+  const saved = JSON.parse(raw);
+
+  if (saved.simSetCode) {
+    const simSel = document.getElementById('simSetSelect');
+    if (simSel) simSel.value = saved.simSetCode;
+    await loadSimSet(saved.simSetCode);
+  }
+  if (saved.clSetCode) {
+    const clSel = document.getElementById('clSetSelect');
+    if (clSel) clSel.value = saved.clSetCode;
+    await loadClSet(saved.clSetCode);
+  }
+  if (saved.tab) switchTab(saved.tab);
+  return true;
+}
+
 // ── Auth UI ───────────────────────────────────────────────
 
 function updateAuthUI() {
@@ -101,7 +133,10 @@ function showSimMessage(icon, text, showLoginBtn = false) {
     `;
     emptyState.style.display = '';
     if (showLoginBtn) {
-      document.getElementById('btnLoginGate')?.addEventListener('click', signInWithGoogle);
+      document.getElementById('btnLoginGate')?.addEventListener('click', () => {
+        saveStateBeforeRedirect();
+        signInWithGoogle();
+      });
     }
   }
 }
@@ -248,7 +283,10 @@ async function loadSets() {
 
 async function init() {
   // Auth buttons
-  document.getElementById('btnLogin').addEventListener('click', signInWithGoogle);
+  document.getElementById('btnLogin').addEventListener('click', () => {
+    saveStateBeforeRedirect();
+    signInWithGoogle();
+  });
   document.getElementById('btnLogout').addEventListener('click', signOut);
 
   // Sim set selector
@@ -270,10 +308,7 @@ async function init() {
   // Carica lista set
   await loadSets();
 
-  // Stato iniziale card list: empty
-  showClEmpty(true);
-
-  // Auth state listener
+  // Auth state listener (per cambi futuri: logout, ecc.)
   onAuthStateChange(async (session) => {
     S.session = session;
     S.profile = session?.user ? await getMyProfile() : null;
@@ -291,6 +326,10 @@ async function init() {
   S.session = data.session;
   S.profile = S.session?.user ? await getMyProfile() : null;
   updateAuthUI();
+
+  // Ripristina stato pre-login se torniamo da un redirect OAuth
+  const restored = await restoreStateAfterRedirect();
+  if (!restored) showClEmpty(true);
 }
 
 init();
