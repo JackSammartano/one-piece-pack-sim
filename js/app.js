@@ -6,18 +6,33 @@ import { supabase } from './config.js';
 import { signInWithGoogle, signOut, onAuthStateChange, getMyProfile } from './auth.js';
 import { buildPools } from './pools.js';
 import { applyFilters, resetFilters, setRenderCallbacks } from './filters.js';
-import { openPacks as _openPacks, resetAll, setOnPacksOpened } from './simulator.js';
+import { openPacks as _openPacks, resetAll, updateStats, setOnPacksOpened } from './simulator.js';
 import { renderPullResult, renderCardListGrid, renderFavs } from './render.js';
 import { openModal, closeModal, modalToggleFav, setOnModalFavToggle } from './modal.js';
 import { loadFavs, removeFav, updateFavNote, clToggleFav, toggleFav, setOnFavsChanged } from './favorites.js';
 import { switchTab, setTabCallbacks } from './tabs.js';
 import { exportCards } from './export.js';
 
+// ── Costanti cache ────────────────────────────────────────
+
+const CACHE_KEY = 'opcg_cache';
+const SET_KEY   = 'opcg_set';
+
 // ── Wire callbacks ────────────────────────────────────────
 
 setRenderCallbacks({ renderCardListGrid, renderFavs });
 setTabCallbacks({ renderCardListGrid, renderFavs });
-setOnPacksOpened((cards, n) => renderPullResult(cards, n));
+setOnPacksOpened((cards, n) => {
+  renderPullResult(cards, n);
+  try {
+    sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+      setCode: S.setCode,
+      pulled:  cards,
+      nPacks:  n,
+      stats:   { ...S.sessionStats }
+    }));
+  } catch (_) {}
+});
 setOnFavsChanged(() => {
   renderFavs();
   const tabCl = document.getElementById('tabCl');
@@ -34,7 +49,10 @@ window.openPacks = () => {
   }
   _openPacks();
 };
-window.resetAll       = resetAll;
+window.resetAll = () => {
+  resetAll();
+  try { sessionStorage.removeItem(CACHE_KEY); } catch (_) {}
+};
 window.switchTab      = switchTab;
 window.applyFilters   = applyFilters;
 window.resetFilters   = resetFilters;
@@ -180,10 +198,27 @@ async function loadSet(code) {
   // Sincronizza tutte le tendine
   syncSetSelectors(code);
 
+  // Salva set selezionato per auto-reload al prossimo refresh
+  try { localStorage.setItem(SET_KEY, code); } catch (_) {}
+
   resetAll();
   await loadFavs();
   renderCardListGrid();
   renderFavs();
+
+  // Ripristina sessione di sbustamento se stessa set
+  try {
+    const raw = sessionStorage.getItem(CACHE_KEY);
+    if (raw) {
+      const cache = JSON.parse(raw);
+      if (cache.setCode === code && cache.pulled?.length) {
+        S.sessionStats = cache.stats;
+        S.lastPulled   = cache.pulled;
+        updateStats();
+        renderPullResult(cache.pulled, cache.nPacks);
+      }
+    }
+  } catch (_) {}
 
   // Riabilita il bottone solo se loggato
   if (btnOpen && S.session?.user) btnOpen.disabled = false;
@@ -207,9 +242,17 @@ async function init() {
   await loadSets();
 
   onAuthStateChange(async (session) => {
+    const wasLogged = !!S.session?.user;
     S.session = session;
     S.profile = session?.user ? await getMyProfile() : null;
     updateAuthUI();
+
+    if (!session?.user && wasLogged) {
+      // Logout: rimuovi set salvato e cache
+      try { localStorage.removeItem(SET_KEY); } catch (_) {}
+      try { sessionStorage.removeItem(CACHE_KEY); } catch (_) {}
+    }
+
     if (S.setCode) {
       await loadFavs();
       renderCardListGrid();
@@ -221,6 +264,12 @@ async function init() {
   S.session = data.session;
   S.profile = S.session?.user ? await getMyProfile() : null;
   updateAuthUI();
+
+  // Auto-reload set salvato (ripristina card list e preferiti)
+  try {
+    const savedSet = localStorage.getItem(SET_KEY);
+    if (savedSet) await loadSet(savedSet);
+  } catch (_) {}
 }
 
 init();
