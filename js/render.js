@@ -110,8 +110,9 @@ export function renderCardListGrid() {
   const cards = filterPool([...S.POOL, ...altCards]);
   const countEl = document.getElementById('filterActiveCount');
   if (countEl) {
+    const total = S.POOL.length + altCards.length;
     const active = hasActiveFilters(getFilters());
-    countEl.textContent = active ? `${cards.length} / ${S.POOL.length} carte` : '';
+    countEl.textContent = active ? `${cards.length} / ${total} carte` : `${total} carte`;
   }
 
   document.getElementById('clGrid').innerHTML = cards.map(c => {

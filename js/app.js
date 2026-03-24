@@ -192,8 +192,9 @@ async function loadSet(code) {
   buildPools();
 
   const setName = allSets.find(s => s.set_code === code)?.name || code;
+  const totalCards = S.POOL.length + S.DB.filter(c => c.isAlt && !c.outOfSet).length;
   document.getElementById('setTitle').textContent =
-    `Pack Simulator · ${code} · ${setName} (${S.POOL.length} carte)`;
+    `Pack Simulator · ${code} · ${setName} (${totalCards} carte)`;
 
   // Sincronizza tutte le tendine
   syncSetSelectors(code);
