@@ -7,9 +7,7 @@ import { S } from './state.js';
  * Copia negli appunti le carte estratte in formato deck-list.
  * Formato: "2 EB03-001 Nefeltari Vivi"
  */
-export function exportCards() {
-  if (!S.lastPulled.length) return;
-
+function buildExportText() {
   const cnt = {};
   const byK = {};
   S.lastPulled.forEach(c => {
@@ -17,18 +15,18 @@ export function exportCards() {
     cnt[k] = (cnt[k] || 0) + 1;
     byK[k] = c;
   });
-
-  const txt = Object.entries(cnt)
+  return Object.entries(cnt)
     .map(([k, q]) => { const c = byK[k]; return `${q} ${c.num} ${c.name}`; })
     .join('\n');
+}
 
+function copyToClipboard(txt, btnId, label) {
   navigator.clipboard.writeText(txt).then(() => {
-    const b = document.getElementById('btnExport');
+    const b = document.getElementById(btnId);
     b.textContent = '✓ Copiato!';
     b.classList.add('copied');
-    setTimeout(() => { b.textContent = '📋 Esporta'; b.classList.remove('copied'); }, 2000);
+    setTimeout(() => { b.textContent = label; b.classList.remove('copied'); }, 2000);
   }).catch(() => {
-    // Fallback per browser senza clipboard API
     const t = document.createElement('textarea');
     t.value = txt;
     t.style.cssText = 'position:fixed;opacity:0';
@@ -37,4 +35,15 @@ export function exportCards() {
     document.execCommand('copy');
     document.body.removeChild(t);
   });
+}
+
+export function exportCards() {
+  if (!S.lastPulled.length) return;
+  copyToClipboard(buildExportText(), 'btnExport', '📋 Esporta');
+}
+
+export function exportCardsWithRainbow() {
+  if (!S.lastPulled.length) return;
+  const txt = buildExportText() + '\n1xP-999';
+  copyToClipboard(txt, 'btnExportRainbow', '🌈 Esporta con Rainbow Luffy');
 }

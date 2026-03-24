@@ -11,7 +11,7 @@ import { renderPullResult, renderCardListGrid, renderFavs } from './render.js';
 import { openModal, closeModal, modalToggleFav, setOnModalFavToggle } from './modal.js';
 import { loadFavs, removeFav, updateFavNote, clToggleFav, toggleFav, setOnFavsChanged } from './favorites.js';
 import { switchTab, setTabCallbacks } from './tabs.js';
-import { exportCards } from './export.js';
+import { exportCards, exportCardsWithRainbow } from './export.js';
 
 // ── Costanti cache ────────────────────────────────────────
 
@@ -47,6 +47,7 @@ window.openPacks = () => {
     document.getElementById('setTitle').textContent = '⚠ Seleziona un set prima di sbustare';
     return;
   }
+  switchTab('sim');
   _openPacks();
 };
 window.resetAll = () => {
@@ -63,7 +64,8 @@ window.toggleFav      = toggleFav;
 window.removeFav      = removeFav;
 window.updateFavNote  = updateFavNote;
 window.clToggleFav    = clToggleFav;
-window.exportCards    = exportCards;
+window.exportCards            = exportCards;
+window.exportCardsWithRainbow = exportCardsWithRainbow;
 
 // ── Helpers ───────────────────────────────────────────────
 
