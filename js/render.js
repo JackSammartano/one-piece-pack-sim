@@ -106,7 +106,8 @@ export function renderPullResult(cards, nPacks) {
  * Rendering griglia Card List.
  */
 export function renderCardListGrid() {
-  const cards = filterPool(S.POOL);
+  const altCards = S.DB.filter(c => c.isAlt && !c.outOfSet);
+  const cards = filterPool([...S.POOL, ...altCards]);
   const countEl = document.getElementById('filterActiveCount');
   if (countEl) {
     const active = hasActiveFilters(getFilters());
