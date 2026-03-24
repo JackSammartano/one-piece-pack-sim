@@ -85,7 +85,7 @@ function rowToCard(row) {
     counter:   row.counter,
     desc:      row.description || '',
     url:       row.url || `https://www.tcgplayer.com/product/${row.product_id}`,
-    imgRemote: row.img_remote || `https://tcgplayer-cdn.tcgplayer.com/product/${row.product_id}_400w.jpg`,
+    imgRemote: `https://tcgplayer-cdn.tcgplayer.com/product/${row.product_id}_400w.jpg`,
     isAlt:     !!row.is_alt,
     outOfSet:  !!row.out_of_set
   };
