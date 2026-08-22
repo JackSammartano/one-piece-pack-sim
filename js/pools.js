@@ -57,7 +57,7 @@ export function buildPools() {
  * Marca le carte con prefisso diverso dal dominante come outOfSet.
  * Usato dallo script admin per l'import.
  * @param {Array} cards - Carte normalizzate
- * @returns {Array} Stesse carte con campo out_of_set aggiornato
+ * @returns {Array} Stesse carte con campo outOfSet aggiornato
  */
 export function markOutOfSet(cards) {
   const prefixCount = {};
@@ -69,7 +69,7 @@ export function markOutOfSet(cards) {
     .sort((a, b) => b[1] - a[1])[0]?.[0] || '';
 
   cards.forEach(c => {
-    c.out_of_set = !!(mainPrefix && !(c.num || '').startsWith(mainPrefix));
+    c.outOfSet = !!(mainPrefix && !(c.num || '').startsWith(mainPrefix));
   });
   return cards;
 }
