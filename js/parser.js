@@ -28,7 +28,8 @@ export function getExtended(card, name) {
 export function parseDB(raw) {
   const entries = raw.map(p => {
     const num      = getExtended(p, 'Number') || '';
-    const rarity   = getExtended(p, 'Rarity') || 'C';
+    const isSpecial = /\(SP\)/i.test(p.name || '') || /\(SP\)/i.test(p.cleanName || '');
+    const rarity   = isSpecial ? 'SP' : getExtended(p, 'Rarity') || 'C';
     const color    = getExtended(p, 'Color') || '';
     const cardType = getExtended(p, 'CardType') || getExtended(p, 'Card Type') || 'Character';
     const sub      = getExtended(p, 'Subtypes') || getExtended(p, 'Subtype(s)') || '';
@@ -69,9 +70,10 @@ export function parseDB(raw) {
     };
   }).filter(c => c.num && c.rarity);
 
-  // Secondo passaggio: duplicati num|rarity → marca come alt art
+  // Secondo passaggio: duplicati base num|rarity → marca come alt art
   const seen = {};
   entries.forEach(c => {
+    if (c.isAlt) return;
     const k = c.num + '|' + c.rarity;
     if (seen[k]) c.isAlt = true;
     else seen[k] = true;

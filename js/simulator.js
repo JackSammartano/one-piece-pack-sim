@@ -13,17 +13,19 @@ function pickRandom(arr) {
 }
 
 function maybeAlt(card) {
+  if (card.isAlt) return card;
   const k = card.num + '|' + card.rarity;
-  const alt = S.ALT_MAP[k];
-  return (alt && Math.random() < 0.30) ? alt : card;
+  const alts = S.ALT_MAP[k];
+  return (alts?.length && Math.random() < 0.30) ? pickRandom(alts) : card;
 }
 
 /**
  * Simula una singola busta (12 carte).
- * Slot 1: rarita pesata. Slot 2-12: 10% R, 90% C.
+ * Slot 1: rarita pesata. Slot 2-12: 10% R, 90% dal pool C/UC.
  */
 function simulatePack() {
   const pack = [];
+  const commonCards = [...S.pools.C, ...S.pools.UC];
 
   // Slot speciale (posizione 1)
   const r1 = Math.random();
@@ -39,7 +41,7 @@ function simulatePack() {
   // Slot 2-12
   for (let i = 0; i < 11; i++) {
     pack.push(maybeAlt(
-      Math.random() < 0.10 ? pickRandom(S.pools.R) : pickRandom(S.pools.C)
+      Math.random() < 0.10 ? pickRandom(S.pools.R) : pickRandom(commonCards)
     ));
   }
 

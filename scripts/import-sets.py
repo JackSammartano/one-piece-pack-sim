@@ -58,7 +58,9 @@ def parse_cards(raw):
     entries = []
     for p in raw:
         num = get_extended(p, 'Number') or ''
-        rarity = get_extended(p, 'Rarity') or 'C'
+        is_special = any(re.search(r'\(SP\)', p.get(field) or '', re.IGNORECASE)
+                         for field in ('name', 'cleanName'))
+        rarity = 'SP' if is_special else get_extended(p, 'Rarity') or 'C'
         color = get_extended(p, 'Color') or ''
         card_type = get_extended(p, 'CardType') or get_extended(p, 'Card Type') or 'Character'
         sub = get_extended(p, 'Subtypes') or get_extended(p, 'Subtype(s)') or ''
@@ -105,6 +107,8 @@ def parse_cards(raw):
     # Secondo passaggio: duplicati num|rarity -> marca come alt art
     seen = set()
     for c in entries:
+        if c['is_alt']:
+            continue
         k = c['num'] + '|' + c['rarity']
         if k in seen:
             c['is_alt'] = True
@@ -114,20 +118,9 @@ def parse_cards(raw):
     return entries
 
 def mark_out_of_set(cards):
-    """Marca carte con prefisso diverso dal dominante come out_of_set."""
-    prefix_count = {}
+    """Include tutte le carte del gruppo importato, comprese le ristampe."""
     for c in cards:
-        p = c['num'].split('-')[0] if c['num'] else ''
-        if p:
-            prefix_count[p] = prefix_count.get(p, 0) + 1
-
-    main_prefix = ''
-    if prefix_count:
-        main_prefix = max(prefix_count, key=prefix_count.get)
-
-    for c in cards:
-        p = c['num'].split('-')[0] if c['num'] else ''
-        c['out_of_set'] = bool(main_prefix and not c['num'].startswith(main_prefix))
+        c['out_of_set'] = False
 
     return cards
 

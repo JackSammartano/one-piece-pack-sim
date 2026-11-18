@@ -1,7 +1,7 @@
 /**
  * pools.js — Costruzione pool per rarita
- * Determina il prefisso dominante del set, marca carte outOfSet,
- * costruisce POOL (base cards) e ALT_MAP (alt art).
+ * Costruisce POOL (base cards), ALT_MAP (liste di alt art)
+ * e pool estraibili per rarita, incluse le alternate senza base nel set.
  */
 import { S } from './state.js';
 
@@ -27,38 +27,36 @@ export function buildPools() {
         S.POOL.push(c);
       }
     } else {
-      if (!S.ALT_MAP[k]) S.ALT_MAP[k] = c;
+      if (!S.ALT_MAP[k]) S.ALT_MAP[k] = [];
+      S.ALT_MAP[k].push(c);
     }
   });
 
-  function byR(r) { return S.POOL.filter(c => c.rarity === r); }
+  const standaloneAlts = Object.entries(S.ALT_MAP)
+    .filter(([k]) => !seen.has(k))
+    .flatMap(([, cards]) => cards);
+  const candidates = [...S.POOL, ...standaloneAlts];
+  function byR(r) { return candidates.filter(c => c.rarity === r); }
   S.pools = {
     L: byR('L'),
     SR: byR('SR'),
     R: byR('R'),
     C: byR('C'),
+    UC: byR('UC'),
     SP: byR('SP'),
     SEC: byR('SEC')
   };
 }
 
 /**
- * Marca le carte con prefisso diverso dal dominante come outOfSet.
- * Usato dallo script admin per l'import.
+ * Include tutte le carte del gruppo importato, comprese le ristampe
+ * con numero appartenente ad altri set. Usato dallo script admin.
  * @param {Array} cards - Carte normalizzate
- * @returns {Array} Stesse carte con campo out_of_set aggiornato
+ * @returns {Array} Stesse carte con campo outOfSet aggiornato
  */
 export function markOutOfSet(cards) {
-  const prefixCount = {};
   cards.forEach(c => {
-    const p = (c.num || '').split('-')[0];
-    if (p) prefixCount[p] = (prefixCount[p] || 0) + 1;
-  });
-  const mainPrefix = Object.entries(prefixCount)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || '';
-
-  cards.forEach(c => {
-    c.out_of_set = !!(mainPrefix && !(c.num || '').startsWith(mainPrefix));
+    c.outOfSet = false;
   });
   return cards;
 }

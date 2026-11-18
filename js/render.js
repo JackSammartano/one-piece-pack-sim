@@ -44,9 +44,9 @@ export function renderPullResult(cards, nPacks) {
   // Rarity summary chips
   const cnt = {};
   cards.forEach(c => cnt[c.rarity] = (cnt[c.rarity] || 0) + 1);
-  const CHIPCLS = { SEC: 'sec-chip', SP: 'sp-chip', SR: 'sr-chip', L: 'l-chip', R: 'r-chip', C: 'c-chip' };
+  const CHIPCLS = { SEC: 'sec-chip', SP: 'sp-chip', SR: 'sr-chip', L: 'l-chip', R: 'r-chip', UC: 'c-chip', C: 'c-chip' };
   document.getElementById('raritySummary').innerHTML =
-    ['SEC', 'SP', 'SR', 'L', 'R', 'C'].filter(r => cnt[r])
+    ['SEC', 'SP', 'SR', 'L', 'R', 'UC', 'C'].filter(r => cnt[r])
       .map(r => `<div class="rs-chip ${CHIPCLS[r]}"><strong>${cnt[r]}</strong>&nbsp;${r}</div>`).join('');
 
   // Subtypes

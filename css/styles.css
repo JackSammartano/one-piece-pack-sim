@@ -160,7 +160,8 @@
   .rarity-wrap-SR  .card-img-wrap::after{background:var(--sr-color); box-shadow:0 0 6px rgba(232,160,32,.6);}
   .rarity-wrap-L   .card-img-wrap::after{background:var(--l-color);}
   .rarity-wrap-R   .card-img-wrap::after{background:var(--r-color);}
-  .rarity-wrap-C   .card-img-wrap::after{background:var(--c-color);}
+  .rarity-wrap-C   .card-img-wrap::after,
+  .rarity-wrap-UC  .card-img-wrap::after{background:var(--c-color);}
   .rarity-wrap-EVENT .card-img-wrap::after{background:var(--event-color);}
   .no-img{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:2.5rem;opacity:.3;}
 
@@ -173,7 +174,8 @@
   .card-meta{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;}
   .card-num{color:rgba(245,230,200,.35);font-family:monospace;font-size:.68rem;}
   .rarity-badge{padding:.1rem .4rem;border-radius:2px;font-family:'Cinzel',serif;font-size:.58rem;letter-spacing:.08em;font-weight:700;}
-  .badge-C    {background:rgba(107,114,128,.2);color:var(--c-color);  border:1px solid rgba(107,114,128,.3);}
+  .badge-C,
+  .badge-UC   {background:rgba(107,114,128,.2);color:var(--c-color);  border:1px solid rgba(107,114,128,.3);}
   .badge-R    {background:rgba(59,130,246,.15); color:#93c5fd;         border:1px solid rgba(59,130,246,.3);}
   .badge-SR   {background:rgba(232,160,32,.15); color:var(--sr-color); border:1px solid rgba(232,160,32,.3);}
   .badge-SEC  {background:rgba(139,92,246,.15); color:#c4b5fd;         border:1px solid rgba(139,92,246,.3);}
@@ -214,7 +216,8 @@
   .fav-card.rarity-SR  .fav-img-wrap::after{background:var(--sr-color); box-shadow:0 0 5px rgba(232,160,32,.5);}
   .fav-card.rarity-L   .fav-img-wrap::after{background:var(--l-color);}
   .fav-card.rarity-R   .fav-img-wrap::after{background:var(--r-color);}
-  .fav-card.rarity-C   .fav-img-wrap::after{background:var(--c-color);}
+  .fav-card.rarity-C   .fav-img-wrap::after,
+  .fav-card.rarity-UC  .fav-img-wrap::after{background:var(--c-color);}
   .fav-card.rarity-EVENT .fav-img-wrap::after{background:var(--event-color);}
 
   .fav-body{padding:.65rem .75rem;display:flex;flex-direction:column;gap:.5rem;}
@@ -278,7 +281,8 @@
   .cl-card.rarity-SR  .cl-img-wrap::after{background:var(--sr-color); box-shadow:0 0 5px rgba(232,160,32,.5);}
   .cl-card.rarity-L   .cl-img-wrap::after{background:var(--l-color);}
   .cl-card.rarity-R   .cl-img-wrap::after{background:var(--r-color);}
-  .cl-card.rarity-C   .cl-img-wrap::after{background:var(--c-color);}
+  .cl-card.rarity-C   .cl-img-wrap::after,
+  .cl-card.rarity-UC  .cl-img-wrap::after{background:var(--c-color);}
   .cl-card.rarity-EVENT .cl-img-wrap::after{background:var(--event-color);}
 
   .cl-card.is-alt::before{content:'ALT ART';position:absolute;top:6px;right:6px;z-index:2;
