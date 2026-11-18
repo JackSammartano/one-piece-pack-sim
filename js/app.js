@@ -16,6 +16,7 @@ import { exportCards, exportCardsWithRainbow } from './export.js';
 // ── Costanti cache ────────────────────────────────────────
 
 const CACHE_KEY = 'opcg_cache';
+const CACHE_VERSION = 2;
 const SET_KEY   = 'opcg_set';
 
 // ── Wire callbacks ────────────────────────────────────────
@@ -26,6 +27,7 @@ setOnPacksOpened((cards, n) => {
   renderPullResult(cards, n);
   try {
     sessionStorage.setItem(CACHE_KEY, JSON.stringify({
+      version: CACHE_VERSION,
       setCode: S.setCode,
       pulled:  cards,
       nPacks:  n,
@@ -214,7 +216,9 @@ async function loadSet(code) {
     const raw = sessionStorage.getItem(CACHE_KEY);
     if (raw) {
       const cache = JSON.parse(raw);
-      if (cache.setCode === code && cache.pulled?.length) {
+      if (cache.version === CACHE_VERSION && cache.setCode === code && cache.pulled?.length &&
+          Number.isInteger(cache.nPacks) && cache.nPacks >= 1 && cache.nPacks <= 24 &&
+          Number.isFinite(cache.stats?.hits)) {
         S.sessionStats = cache.stats;
         S.lastPulled   = cache.pulled;
         updateStats();

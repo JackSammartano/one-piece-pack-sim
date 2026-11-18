@@ -5,6 +5,20 @@
  */
 import { S } from './state.js';
 
+/** Categoria di hit, distinta dalla rarita stampata sulla carta. */
+export function getHitType(card) {
+  const name = card.name || '';
+  if (/\bmanga\b/i.test(name)) return 'MANGA';
+  if (card.rarity === 'TR' || /\bTR\b|\btreasure rare\b/i.test(name)) return 'TR';
+  if (card.rarity === 'SP' || /\bSP\b/i.test(name)) return 'SP';
+  if (card.isAlt || /\balternate\b|\balt art\b|\bparallel\b/i.test(name)) {
+    if (card.rarity === 'SEC') return 'SEC_AA';
+    if (card.rarity === 'L' || card.cardType === 'Leader') return 'LEADER_AA';
+    return 'AA';
+  }
+  return card.rarity === 'SEC' ? 'SEC' : null;
+}
+
 /**
  * Costruisce i pool dal DB corrente.
  * Popola S.POOL, S.ALT_MAP, S.pools.
@@ -32,19 +46,21 @@ export function buildPools() {
     }
   });
 
-  const standaloneAlts = Object.entries(S.ALT_MAP)
-    .filter(([k]) => !seen.has(k))
-    .flatMap(([, cards]) => cards);
-  const candidates = [...S.POOL, ...standaloneAlts];
-  function byR(r) { return candidates.filter(c => c.rarity === r); }
+  const baseCards = S.POOL.filter(c => !getHitType(c));
+  function byR(r) { return baseCards.filter(c => c.rarity === r); }
+  const hits = { SEC: [], AA: [], SEC_AA: [], LEADER_AA: [], SP: [], MANGA: [], TR: [] };
+  S.DB.forEach(c => {
+    if (c.outOfSet) return;
+    const type = getHitType(c);
+    if (type) hits[type].push(c);
+  });
   S.pools = {
     L: byR('L'),
     SR: byR('SR'),
     R: byR('R'),
     C: byR('C'),
     UC: byR('UC'),
-    SP: byR('SP'),
-    SEC: byR('SEC')
+    hits
   };
 }
 

@@ -38,11 +38,13 @@
           </div>
           <div class="input-group">
             <label for="packCount">Numero di buste</label>
-            <input type="number" id="packCount" value="6" min="1" max="999">
+            <input type="number" id="packCount" value="6" min="1" max="24" step="1">
           </div>
           <button class="btn-open" id="btnOpenPacks" onclick="openPacks()" disabled>🎴 Apri Buste</button>
           <button class="btn-secondary" onclick="resetAll()">↺ Reset sessione</button>
+          <div id="simError" class="top-error" style="display:none;" role="alert"></div>
           <div style="font-size:.8rem;color:rgba(245,230,200,.35);line-height:1.5;">
+            Ogni apertura estrae buste dallo stesso nuovo box virtuale. Modello empirico semplificato, senza DON!!.
             Immagini via CDN TCGPlayer.
           </div>
         </div>
@@ -55,8 +57,8 @@
         <div class="stats-grid">
           <div class="stat-chip"><span class="val" id="stat-packs">0</span><span class="lbl">Buste aperte</span></div>
           <div class="stat-chip"><span class="val" id="stat-cards">0</span><span class="lbl">Carte totali</span></div>
-          <div class="stat-chip"><span class="val" id="stat-sr">0</span><span class="lbl">SR ottenute</span></div>
-          <div class="stat-chip"><span class="val" id="stat-sec">0</span><span class="lbl">SEC / SP</span></div>
+          <div class="stat-chip"><span class="val" id="stat-sr">0</span><span class="lbl">SR base</span></div>
+          <div class="stat-chip"><span class="val" id="stat-sec">0</span><span class="lbl">Hit (SEC / AA / SP / Manga / TR)</span></div>
         </div>
       </div>
     </div>

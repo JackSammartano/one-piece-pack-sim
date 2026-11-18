@@ -13,7 +13,7 @@ export const S = {
   setName: '',
 
   // Sessione simulazione
-  sessionStats: { packs: 0, cards: 0, sr: 0, secSp: 0 },
+  sessionStats: { packs: 0, cards: 0, sr: 0, secSp: 0, hits: 0 },
   lastPulled: [],
 
   // Preferiti

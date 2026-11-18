@@ -31,7 +31,7 @@ export function renderPullResult(cards, nPacks) {
   document.getElementById('emptyState').style.display = 'none';
   document.getElementById('pullResult').classList.add('active');
   document.getElementById('pullLabel').textContent =
-    `${nPacks} bust${nPacks === 1 ? 'a' : 'e'} · ${cards.length} carte`;
+    `${nPacks} bust${nPacks === 1 ? 'a' : 'e'} dallo stesso box · ${cards.length} carte`;
 
   // Badge filtri
   const simBadge = document.getElementById('simFilterBadge');
