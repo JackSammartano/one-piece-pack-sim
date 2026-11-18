@@ -10,19 +10,8 @@ import { S } from './state.js';
  * Popola S.POOL, S.ALT_MAP, S.pools.
  */
 export function buildPools() {
-  // Determina il prefisso dominante (es. "EB03", "OP08")
-  const prefixCount = {};
-  S.DB.forEach(c => {
-    const p = c.num.split('-')[0];
-    if (p) prefixCount[p] = (prefixCount[p] || 0) + 1;
-  });
-  const mainPrefix = Object.entries(prefixCount)
-    .sort((a, b) => b[1] - a[1])[0]?.[0] || '';
-
-  // Marca le carte fuori set
-  S.DB.forEach(c => {
-    c.outOfSet = !!(mainPrefix && !c.num.startsWith(mainPrefix));
-  });
+  // out_of_set è determinato al momento dell'import (admin.js → markOutOfSet)
+  // e può essere sovrascritto manualmente nel DB. Non ricalcolare a runtime.
 
   S.POOL = [];
   S.ALT_MAP = {};

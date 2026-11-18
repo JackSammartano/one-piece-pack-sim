@@ -11,7 +11,7 @@ import { renderPullResult, renderCardListGrid, renderFavs } from './render.js';
 import { openModal, closeModal, modalToggleFav, setOnModalFavToggle } from './modal.js';
 import { loadFavs, removeFav, updateFavNote, clToggleFav, toggleFav, setOnFavsChanged } from './favorites.js';
 import { switchTab, setTabCallbacks } from './tabs.js';
-import { exportCards } from './export.js';
+import { exportCards, exportCardsWithRainbow } from './export.js';
 
 // ── Costanti cache ────────────────────────────────────────
 
@@ -47,6 +47,7 @@ window.openPacks = () => {
     document.getElementById('setTitle').textContent = '⚠ Seleziona un set prima di sbustare';
     return;
   }
+  switchTab('sim');
   _openPacks();
 };
 window.resetAll = () => {
@@ -63,7 +64,8 @@ window.toggleFav      = toggleFav;
 window.removeFav      = removeFav;
 window.updateFavNote  = updateFavNote;
 window.clToggleFav    = clToggleFav;
-window.exportCards    = exportCards;
+window.exportCards            = exportCards;
+window.exportCardsWithRainbow = exportCardsWithRainbow;
 
 // ── Helpers ───────────────────────────────────────────────
 
@@ -85,7 +87,7 @@ function rowToCard(row) {
     counter:   row.counter,
     desc:      row.description || '',
     url:       row.url || `https://www.tcgplayer.com/product/${row.product_id}`,
-    imgRemote: row.img_remote || `https://tcgplayer-cdn.tcgplayer.com/product/${row.product_id}_400w.jpg`,
+    imgRemote: `https://tcgplayer-cdn.tcgplayer.com/product/${row.product_id}_400w.jpg`,
     isAlt:     !!row.is_alt,
     outOfSet:  !!row.out_of_set
   };
@@ -192,8 +194,9 @@ async function loadSet(code) {
   buildPools();
 
   const setName = allSets.find(s => s.set_code === code)?.name || code;
+  const totalCards = S.POOL.length + S.DB.filter(c => c.isAlt && !c.outOfSet).length;
   document.getElementById('setTitle').textContent =
-    `Pack Simulator · ${code} · ${setName} (${S.POOL.length} carte)`;
+    `Pack Simulator · ${code} · ${setName} (${totalCards} carte)`;
 
   // Sincronizza tutte le tendine
   syncSetSelectors(code);
